@@ -192,6 +192,7 @@ async def fetch_company_data(query: str) -> list[dict]:
         driver.quit()
         return await parse_html_search(json_data)
     except Exception as e:
+        driver.quit()
         logger.error(f"Error fetching data for query '{query}': {e}")
         return []
 
