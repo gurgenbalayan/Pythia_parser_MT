@@ -43,7 +43,7 @@ async def fetch_company_details(old_url: str) -> dict:
             profile_path = os.path.join(profile, word)
             options.add_argument(f"--user-data-dir={profile_path}")
             options.add_argument(f'--user-agent={await generate_random_user_agent()}')
-            options.add_argument(f'--lang={await generate_random_language()}')
+            options.add_argument('--lang=en-US')
             options.add_argument("--headless=new")
             options.add_argument("--start-maximized")
             options.add_argument("--disable-webrtc")
