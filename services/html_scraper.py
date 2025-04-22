@@ -26,9 +26,6 @@ async def generate_random_user_agent():
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/89.0',
     ]
     return random.choice(browsers)
-async def generate_random_language():
-    languages = ['en-US']
-    return random.choice(languages)
 async def fetch_company_details(old_url: str) -> dict:
     try:
         match = re.search(r"/business/([A-Z0-9]+)/", old_url)
@@ -140,7 +137,7 @@ async def fetch_company_data(query: str) -> list[dict]:
         profile_path = os.path.join(profile, word)
         options.add_argument(f"--user-data-dir={profile_path}")
         options.add_argument(f'--user-agent={await generate_random_user_agent()}')
-        options.add_argument(f'--lang={await generate_random_language()}')
+        options.add_argument(f'--lang=en-US')
         options.add_argument("--headless=new")
         options.add_argument("--start-maximized")
         options.add_argument("--disable-webrtc")
