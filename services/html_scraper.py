@@ -27,6 +27,7 @@ async def generate_random_user_agent():
     ]
     return random.choice(browsers)
 async def fetch_company_details(old_url: str) -> dict:
+    driver = None
     try:
         match = re.search(r"/business/([A-Z0-9]+)/", old_url)
         if match:
@@ -44,7 +45,7 @@ async def fetch_company_details(old_url: str) -> dict:
             options.add_argument(f"--user-data-dir={profile_path}")
             options.add_argument(f'--user-agent={await generate_random_user_agent()}')
             options.add_argument('--lang=en-US')
-            options.add_argument("--headless=new")
+            # options.add_argument("--headless=new")
             options.add_argument("--start-maximized")
             options.add_argument("--disable-webrtc")
             options.add_argument("--disable-features=WebRtcHideLocalIpsWithMdns")
@@ -117,13 +118,15 @@ async def fetch_company_details(old_url: str) -> dict:
         else:
             logger.error(f"Error fetching data for query '{old_url}'")
             return []
-        driver.quit()
         return await parse_html_details(json_data_details, record_num, id, name, agent)
     except Exception as e:
-        driver.quit()
         logger.error(f"Error fetching data for query '{url}': {e}")
         return []
+    finally:
+        if driver:
+            driver.quit()
 async def fetch_company_data(query: str) -> list[dict]:
+    driver = None
     try:
         url = "https://biz.sosmt.gov/search/business"
         options = webdriver.ChromeOptions()
@@ -138,7 +141,7 @@ async def fetch_company_data(query: str) -> list[dict]:
         options.add_argument(f"--user-data-dir={profile_path}")
         options.add_argument(f'--user-agent={await generate_random_user_agent()}')
         options.add_argument(f'--lang=en-US')
-        options.add_argument("--headless=new")
+        # options.add_argument("--headless=new")
         options.add_argument("--start-maximized")
         options.add_argument("--disable-webrtc")
         options.add_argument("--disable-features=WebRtcHideLocalIpsWithMdns")
@@ -189,12 +192,13 @@ async def fetch_company_data(query: str) -> list[dict]:
                 decoded_content = brotli.decompress(byte_str)
                 decoded_string = decoded_content.decode('utf-8', errors='ignore')
                 json_data = json.loads(decoded_string)
-        driver.quit()
         return await parse_html_search(json_data)
     except Exception as e:
-        driver.quit()
         logger.error(f"Error fetching data for query '{query}': {e}")
         return []
+    finally:
+        if driver:
+            driver.quit()
 
 async def parse_html_search(data: dict) -> list[dict]:
     results = []
