@@ -5,6 +5,8 @@ import shutil
 import string
 import aiohttp
 import brotli
+from selenium.common import TimeoutException
+from selenium.webdriver import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 import seleniumwire.undetected_chromedriver.v2 as uc
 from selenium.webdriver.support import expected_conditions as EC
@@ -45,7 +47,7 @@ async def fetch_company_details(old_url: str) -> dict:
             options.add_argument(f"--user-data-dir={profile_path}")
             options.add_argument(f'--user-agent={await generate_random_user_agent()}')
             options.add_argument('--lang=en-US')
-            # options.add_argument("--headless=new")
+            options.add_argument("--headless=new")
             options.add_argument("--start-maximized")
             options.add_argument("--disable-webrtc")
             options.add_argument("--disable-features=WebRtcHideLocalIpsWithMdns")
@@ -141,7 +143,7 @@ async def fetch_company_data(query: str) -> list[dict]:
         options.add_argument(f"--user-data-dir={profile_path}")
         options.add_argument(f'--user-agent={await generate_random_user_agent()}')
         options.add_argument(f'--lang=en-US')
-        # options.add_argument("--headless=new")
+        options.add_argument("--headless=new")
         options.add_argument("--start-maximized")
         options.add_argument("--disable-webrtc")
         options.add_argument("--disable-features=WebRtcHideLocalIpsWithMdns")
@@ -175,14 +177,9 @@ async def fetch_company_data(query: str) -> list[dict]:
           '''
         })
         driver.get(url)
-        input_field = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR,
-                                            "#root > div > div.content > div > main > div.search-box > div.search-input-wrapper > div.inner-input-wrapper > form > input"))
-        )
+        input_field = driver.find_element(By.TAG_NAME, "input")
         input_field.send_keys(query)
-        button = driver.find_element(By.CSS_SELECTOR,
-                                     "#root > div > div.content > div > main > div.search-box > div.search-input-wrapper > button")
-        button.click()
+        input_field.send_keys(Keys.RETURN)
         wait = WebDriverWait(driver, 10)  # Ожидаем до 10 секунд
         wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, "#root > div > div.content > div > main > div.table-wrapper > table")))
