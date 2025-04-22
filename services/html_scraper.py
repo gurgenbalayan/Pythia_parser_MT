@@ -112,12 +112,12 @@ async def fetch_company_details(old_url: str) -> dict:
                         json_data_details = json.loads(decoded_string)
                     except Exception as e:
                         continue
-            driver.quit()
             result = await parse_html_name_agent(json_data)
             record_num, id, name, agent = result["record_num"], result["id"], result["name"], result["agent"]
         else:
             logger.error(f"Error fetching data for query '{old_url}'")
             return []
+        driver.quit()
         return await parse_html_details(json_data_details, record_num, id, name, agent)
     except Exception as e:
         driver.quit()
