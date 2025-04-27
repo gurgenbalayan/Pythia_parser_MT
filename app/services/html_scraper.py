@@ -8,15 +8,13 @@ import brotli
 from selenium.common import TimeoutException
 from selenium.webdriver import Keys
 from selenium.webdriver.support.wait import WebDriverWait
-import seleniumwire.undetected_chromedriver.v2 as uc
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from utils.logger import setup_logger
 import os
-from dotenv import load_dotenv
 from seleniumwire import webdriver
-load_dotenv()
 
+SELENIUM_REMOTE_URL = os.getenv("SELENIUM_REMOTE_URL")
 STATE = os.getenv("STATE")
 logger = setup_logger("scraper")
 async def generate_random_user_agent():
@@ -56,7 +54,11 @@ async def fetch_company_details(old_url: str) -> dict:
             options.add_argument("--disable-features=DnsOverHttps")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-blink-features=AutomationControlled")
-            driver = uc.Chrome(options=options)
+            driver = webdriver.Remote(
+                command_executor=SELENIUM_REMOTE_URL,
+                options=options
+            )
+            # driver = uc.Chrome(options=options)
 
             driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
                 "source": """
@@ -152,7 +154,11 @@ async def fetch_company_data(query: str) -> list[dict]:
         options.add_argument("--disable-features=DnsOverHttps")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-blink-features=AutomationControlled")
-        driver = uc.Chrome(options=options)
+        driver = webdriver.Remote(
+            command_executor=SELENIUM_REMOTE_URL,
+            options=options
+        )
+        # driver = uc.Chrome(options=options)
 
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
             "source": """
