@@ -117,7 +117,6 @@ async def fetch_company_data(query: str) -> list[dict]:
         chrome_args = [
             f'--user-agent={await generate_random_user_agent()}',
             '--lang=en-US',
-            "--headless=new",
             "--start-maximized",
             "--disable-webrtc",
             "--disable-features=WebRtcHideLocalIpsWithMdns",
@@ -128,6 +127,7 @@ async def fetch_company_data(query: str) -> list[dict]:
         ]
         for arg in chrome_args:
             options.add_argument(arg)
+        options.add_argument("--headless=new")
         options.add_argument('--proxy-server=http://parser:8087')
         # options.add_argument('--proxy-server=http://host.docker.internal:8087')
         options.add_argument('--ignore-certificate-errors')
@@ -144,33 +144,7 @@ async def fetch_company_data(query: str) -> list[dict]:
                 'port': 8087,
             }
         )
-        # driver = webdriver_selenium.Chrome(options=options)
 
-        # uc.TARGET_VERSION = 100
-        # driver = uc.Chrome()
-
-        # driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-        #     "source": """
-        #         const getContext = HTMLCanvasElement.prototype.getContext;
-        #         HTMLCanvasElement.prototype.getContext = function(type, attrs) {
-        #             const ctx = getContext.apply(this, arguments);
-        #             if (type === '2d') {
-        #                 const originalToDataURL = this.toDataURL;
-        #                 this.toDataURL = function() {
-        #                     return "data:image/png;base64,fake_canvas_fingerprint";
-        #                 };
-        #             }
-        #             return ctx;
-        #         };
-        #         """
-        # })
-        # driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-        #     'source': '''
-        #     Object.defineProperty(navigator, 'webdriver', {
-        #       get: () => undefined
-        #     })
-        #   '''
-        # })
         driver.get(url)
         wait = WebDriverWait(driver, 10)
         link_login = WebDriverWait(driver, 10).until(
