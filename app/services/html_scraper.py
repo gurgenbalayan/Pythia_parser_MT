@@ -1,11 +1,9 @@
+import asyncio
 import json
 import random
 import re
-import shutil
-import string
 import aiohttp
 import brotli
-from selenium.common import TimeoutException
 from selenium.webdriver import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,6 +11,7 @@ from selenium.webdriver.common.by import By
 from utils.logger import setup_logger
 import os
 from seleniumwire import webdriver
+
 
 SELENIUM_REMOTE_URL = os.getenv("SELENIUM_REMOTE_URL")
 STATE = os.getenv("STATE")
@@ -28,21 +27,13 @@ async def generate_random_user_agent():
     return random.choice(browsers)
 async def fetch_company_details(old_url: str) -> dict:
     driver = None
+    json_data = {}
     try:
         match = re.search(r"/business/([A-Z0-9]+)/", old_url)
         if match:
             id = match.group(1)
             url = "https://biz.sosmt.gov/search/business"
             options = webdriver.ChromeOptions()
-            script_dir = os.path.dirname(os.path.realpath(__file__))
-            profile = os.path.join(script_dir, "profile")
-            if not os.path.exists(profile):
-                os.makedirs(profile)
-            else:
-                shutil.rmtree(profile)
-            word = ''.join(random.choices(string.ascii_letters, k=10))
-            profile_path = os.path.join(profile, word)
-            options.add_argument(f"--user-data-dir={profile_path}")
             options.add_argument(f'--user-agent={await generate_random_user_agent()}')
             options.add_argument('--lang=en-US')
             options.add_argument("--headless=new")
@@ -54,34 +45,22 @@ async def fetch_company_details(old_url: str) -> dict:
             options.add_argument("--disable-features=DnsOverHttps")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_argument('--proxy-server=http://parser:8087')
+            # options.add_argument('--proxy-server=http://host.docker.internal:8087')
+            options.add_argument('--ignore-certificate-errors')
+            capabilities = {
+                "browserName": "chrome"
+            }
+            capabilities.update(options.to_capabilities())
             driver = webdriver.Remote(
                 command_executor=SELENIUM_REMOTE_URL,
-                options=options
+                desired_capabilities=capabilities,
+                seleniumwire_options={
+                    'auto_config': False,
+                    'addr': '0.0.0.0',
+                    'port': 8087,
+                }
             )
-            # driver = uc.Chrome(options=options)
-
-            driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-                "source": """
-                            const getContext = HTMLCanvasElement.prototype.getContext;
-                            HTMLCanvasElement.prototype.getContext = function(type, attrs) {
-                                const ctx = getContext.apply(this, arguments);
-                                if (type === '2d') {
-                                    const originalToDataURL = this.toDataURL;
-                                    this.toDataURL = function() {
-                                        return "data:image/png;base64,fake_canvas_fingerprint";
-                                    };
-                                }
-                                return ctx;
-                            };
-                            """
-            })
-            driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-                'source': '''
-                        Object.defineProperty(navigator, 'webdriver', {
-                          get: () => undefined
-                        })
-                      '''
-            })
             driver.get(url)
             input_field = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR,
@@ -131,64 +110,95 @@ async def fetch_company_details(old_url: str) -> dict:
             driver.quit()
 async def fetch_company_data(query: str) -> list[dict]:
     driver = None
+    json_data = {}
     try:
-        url = "https://biz.sosmt.gov/search/business"
+        url = "https://biz.sosmt.gov"
         options = webdriver.ChromeOptions()
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        profile = os.path.join(script_dir, "profile")
-        if not os.path.exists(profile):
-            os.makedirs(profile)
-        else:
-            shutil.rmtree(profile)
-        word = ''.join(random.choices(string.ascii_letters, k=10))
-        profile_path = os.path.join(profile, word)
-        options.add_argument(f"--user-data-dir={profile_path}")
-        options.add_argument(f'--user-agent={await generate_random_user_agent()}')
-        options.add_argument(f'--lang=en-US')
-        options.add_argument("--headless=new")
-        options.add_argument("--start-maximized")
-        options.add_argument("--disable-webrtc")
-        options.add_argument("--disable-features=WebRtcHideLocalIpsWithMdns")
-        options.add_argument("--force-webrtc-ip-handling-policy=default_public_interface_only")
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--disable-features=DnsOverHttps")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_args = [
+            f'--user-agent={await generate_random_user_agent()}',
+            '--lang=en-US',
+            "--headless=new",
+            "--start-maximized",
+            "--disable-webrtc",
+            "--disable-features=WebRtcHideLocalIpsWithMdns",
+            "--force-webrtc-ip-handling-policy=default_public_interface_only",
+            "--disable-features=DnsOverHttps",
+            "--no-sandbox",
+            "--disable-blink-features=AutomationControlled"
+        ]
+        for arg in chrome_args:
+            options.add_argument(arg)
+        options.add_argument('--proxy-server=http://parser:8087')
+        # options.add_argument('--proxy-server=http://host.docker.internal:8087')
+        options.add_argument('--ignore-certificate-errors')
+        capabilities = {
+            "browserName": "chrome"
+        }
+        capabilities.update(options.to_capabilities())
         driver = webdriver.Remote(
             command_executor=SELENIUM_REMOTE_URL,
-            options=options
+            desired_capabilities=capabilities,
+            seleniumwire_options={
+                'auto_config': False,
+                'addr': '0.0.0.0',
+                'port': 8087,
+            }
         )
-        # driver = uc.Chrome(options=options)
+        # driver = webdriver_selenium.Chrome(options=options)
 
-        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-            "source": """
-                const getContext = HTMLCanvasElement.prototype.getContext;
-                HTMLCanvasElement.prototype.getContext = function(type, attrs) {
-                    const ctx = getContext.apply(this, arguments);
-                    if (type === '2d') {
-                        const originalToDataURL = this.toDataURL;
-                        this.toDataURL = function() {
-                            return "data:image/png;base64,fake_canvas_fingerprint";
-                        };
-                    }
-                    return ctx;
-                };
-                """
-        })
-        driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-            'source': '''
-            Object.defineProperty(navigator, 'webdriver', {
-              get: () => undefined
-            })
-          '''
-        })
+        # uc.TARGET_VERSION = 100
+        # driver = uc.Chrome()
+
+        # driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        #     "source": """
+        #         const getContext = HTMLCanvasElement.prototype.getContext;
+        #         HTMLCanvasElement.prototype.getContext = function(type, attrs) {
+        #             const ctx = getContext.apply(this, arguments);
+        #             if (type === '2d') {
+        #                 const originalToDataURL = this.toDataURL;
+        #                 this.toDataURL = function() {
+        #                     return "data:image/png;base64,fake_canvas_fingerprint";
+        #                 };
+        #             }
+        #             return ctx;
+        #         };
+        #         """
+        # })
+        # driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+        #     'source': '''
+        #     Object.defineProperty(navigator, 'webdriver', {
+        #       get: () => undefined
+        #     })
+        #   '''
+        # })
         driver.get(url)
-        input_field = driver.find_element(By.TAG_NAME, "input")
+        wait = WebDriverWait(driver, 10)
+        link_login = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, '#root > div > div.content > header > div > button'))
+        )
+        link_login.click()
+        wait.until(EC.presence_of_element_located(
+            (By.CSS_SELECTOR,
+             "body > div:nth-child(6) > div > div.modal.animated.fast-animation.fullscreen.no-background.login-modal-body.hide-header > div")))
+        input_username = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "#username")))
+        input_password = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "#password")))
+        input_username.send_keys('i6nxqc3r1h')
+        input_password.send_keys('didziw-hoMtyd-3tyzra')
+        input_password.send_keys(Keys.RETURN)
+        await asyncio.sleep(1)
+        link = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, '#sidebar-navigation > div > nav > a:nth-child(2)'))
+        )
+        link.click()
+        input_field = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.TAG_NAME, "input"))
+        )
         input_field.send_keys(query)
         input_field.send_keys(Keys.RETURN)
-        wait = WebDriverWait(driver, 10)  # Ожидаем до 10 секунд
         wait.until(EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "#root > div > div.content > div > main > div.table-wrapper > table")))
+            (By.CSS_SELECTOR, "#root > div > div.content > div > main > div.table-wrapper > table > tbody")))
         for x in driver.requests:
             if x.host == "biz.sosmt.gov" and x.method == "POST" and x.path == "/api/Records/businesssearch":
                 byte_str = x.response.body

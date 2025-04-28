@@ -15,9 +15,17 @@ services:
       QUEUE_NAME: ${QUEUE_NAME}
       STATE: ${STATE}
       PARSER_ID: ${PARSER_ID}
+    ports:
+      - "8087:8087"
     networks:
       - rabbitnet
+    volumes:
+      - selenium-profile:/tmp
 
 networks:
   rabbitnet:
+    external: true
+
+volumes:
+  selenium-profile:
     external: true
