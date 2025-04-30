@@ -28,11 +28,11 @@ async def generate_random_user_agent():
 async def fetch_company_details(old_url: str) -> dict:
     driver = None
     json_data = {}
+    url = "https://biz.sosmt.gov/search/business"
     try:
         match = re.search(r"/business/([A-Z0-9]+)/", old_url)
         if match:
             id = match.group(1)
-            url = "https://biz.sosmt.gov/search/business"
             options = webdriver.ChromeOptions()
             options.add_argument(f'--user-agent={await generate_random_user_agent()}')
             options.add_argument('--lang=en-US')
@@ -100,11 +100,11 @@ async def fetch_company_details(old_url: str) -> dict:
             record_num, id, name, agent = result["record_num"], result["id"], result["name"], result["agent"]
         else:
             logger.error(f"Error fetching data for query '{old_url}'")
-            return []
+            return {}
         return await parse_html_details(json_data_details, record_num, id, name, agent)
     except Exception as e:
         logger.error(f"Error fetching data for query '{url}': {e}")
-        return []
+        return {}
     finally:
         if driver:
             driver.quit()
