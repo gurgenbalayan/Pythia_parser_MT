@@ -35,16 +35,23 @@ async def fetch_company_details(old_url: str) -> dict:
             id = match.group(1)
             options = webdriver.ChromeOptions()
             options.add_argument(f'--user-agent={await generate_random_user_agent()}')
-            options.add_argument('--lang=en-US')
-            options.add_argument("--headless=new")
+            options.add_argument(f'--lang=en-US')
             options.add_argument("--start-maximized")
             options.add_argument("--disable-webrtc")
             options.add_argument("--disable-features=WebRtcHideLocalIpsWithMdns")
             options.add_argument("--force-webrtc-ip-handling-policy=default_public_interface_only")
-            options.add_argument("--window-size=1920,1080")
             options.add_argument("--disable-features=DnsOverHttps")
+            options.add_argument("--no-default-browser-check")
+            options.add_argument("--no-first-run")
             options.add_argument("--no-sandbox")
+            options.add_argument("--test-type")
             options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option("useAutomationExtension", False)
+            options.set_capability("goog:loggingPrefs", {
+                "performance": "ALL",
+                "browser": "ALL"
+            })
             options.add_argument('--proxy-server=http://parser:8087')
             # options.add_argument('--proxy-server=http://host.docker.internal:8087')
             options.add_argument('--ignore-certificate-errors')
@@ -114,20 +121,24 @@ async def fetch_company_data(query: str) -> list[dict]:
     try:
         url = "https://biz.sosmt.gov"
         options = webdriver.ChromeOptions()
-        chrome_args = [
-            f'--user-agent={await generate_random_user_agent()}',
-            '--lang=en-US',
-            "--start-maximized",
-            "--disable-webrtc",
-            "--disable-features=WebRtcHideLocalIpsWithMdns",
-            "--force-webrtc-ip-handling-policy=default_public_interface_only",
-            "--disable-features=DnsOverHttps",
-            "--no-sandbox",
-            "--disable-blink-features=AutomationControlled"
-        ]
-        for arg in chrome_args:
-            options.add_argument(arg)
-        options.add_argument("--headless=new")
+        options.add_argument(f'--user-agent={await generate_random_user_agent()}')
+        options.add_argument(f'--lang=en-US')
+        options.add_argument("--start-maximized")
+        options.add_argument("--disable-webrtc")
+        options.add_argument("--disable-features=WebRtcHideLocalIpsWithMdns")
+        options.add_argument("--force-webrtc-ip-handling-policy=default_public_interface_only")
+        options.add_argument("--disable-features=DnsOverHttps")
+        options.add_argument("--no-default-browser-check")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--test-type")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        options.set_capability("goog:loggingPrefs", {
+            "performance": "ALL",
+            "browser": "ALL"
+        })
         options.add_argument('--proxy-server=http://parser:8087')
         # options.add_argument('--proxy-server=http://host.docker.internal:8087')
         options.add_argument('--ignore-certificate-errors')
