@@ -68,6 +68,7 @@ async def fetch_company_details(old_url: str) -> dict:
                     'port': 8087,
                 }
             )
+            driver.set_page_load_timeout(30)
             driver.get(url)
             input_field = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR,
