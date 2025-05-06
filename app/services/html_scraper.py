@@ -155,7 +155,7 @@ async def fetch_company_data(query: str) -> list[dict]:
                 'port': 8087,
             }
         )
-
+        driver.set_page_load_timeout(30)
         driver.get(url)
         wait = WebDriverWait(driver, 10)
         link_login = WebDriverWait(driver, 10).until(
